@@ -1,0 +1,48 @@
+<!doctype html>
+<html lang="zh-CN">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <meta name="theme-color" content="#edf3fc">
+  <meta name="description" content="一张书桌，一个认真忙碌的小人，一只爱撒娇的白猫。点点脑袋、挠挠痒痒，和他们待一会儿。">
+  <title>小小陪伴 · 午后桌边</title>
+  <link rel="icon" type="image/svg+xml" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 64 64'%3E%3Crect width='64' height='64' rx='20' fill='%234e78bb'/%3E%3Cpath d='M15 30 16 15 29 23 37 23 49 15 50 32Q54 51 32 51 11 51 15 30' fill='white'/%3E%3Cpath d='m23 34 4 2m10 0 4-2m-12 8q3 3 6 0' fill='none' stroke='%234e78bb' stroke-width='3' stroke-linecap='round'/%3E%3C/svg%3E">
+  <link rel="stylesheet" href="./style.css">
+  <script type="importmap">{"imports":{"three":"./vendor/three.module.js"}}</script>
+</head>
+<body>
+  <main id="app">
+    <header class="topbar">
+      <div class="brand"><span class="brand-mark" aria-hidden="true">こ</span><div><h1>小小陪伴<span>午后桌边</span></h1><p>点点他，也摸摸猫。</p></div></div>
+      <div class="tools">
+        <button id="sound" class="icon-button" aria-label="开启互动音效" aria-pressed="false" title="开启互动音效"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M11 5 6 9H3v6h3l5 4Z"/><path id="sound-path" d="m16 9 5 6m0-6-5 6"/></svg><span>音效关</span></button>
+        <button id="reset" class="icon-button" aria-label="重置视角"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M3 10a9 9 0 1 1 1 7M3 4v6h6"/></svg><span>重置视角</span></button>
+      </div>
+    </header>
+    <section id="stage" aria-label="3D 互动场景：坐在电脑前的小人和脚边的白猫">
+      <canvas id="scene" tabindex="0" aria-label="拖动转动视角。按 1 锤下脑袋，按 2 挠痒痒，按 3 摸猫咪。"></canvas>
+      <div id="loading" class="loading"><span class="loader"></span><p>他们马上就来…</p></div>
+      <div id="error" class="error" hidden><strong>小房间暂时没有打开</strong><p id="error-message">请使用支持 WebGL 2 的浏览器，并开启硬件加速。</p><button onclick="location.reload()">重新打开</button></div>
+      <div class="scene-caption"><span class="eyebrow">A LITTLE COMPANY</span><p id="mood">他在忙，猫在做梦。</p><span class="quiet-line">一个不用赶时间的小角落</span></div>
+      <div id="speech" class="speech" role="status" aria-live="polite"></div>
+      <div id="cat-speech" class="speech cat-speech" role="status" aria-live="polite"></div>
+      <button id="head-hint" class="scene-hint" data-action="head" aria-label="锤下人物的脑袋">锤下脑袋<span></span></button>
+      <button id="cat-hint" class="scene-hint" data-action="cat" aria-label="摸摸白猫">摸摸我呀<span></span></button>
+      <div id="sleep" class="sleep" aria-hidden="true">z<span>z</span><small>z</small></div>
+      <div id="particles" aria-hidden="true"></div>
+      <div class="view-note"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M8 3h8M12 3v4M8 21h8M12 17v4M3 8v8M3 12h4M21 8v8M17 12h4"/></svg>拖动看看 · 滚轮缩放</div>
+    </section>
+    <footer class="bottom-area">
+      <div class="interaction-label"><span>一点点互动，一点点开心</span><span class="keyboard-note">也可以直接点场景里的他们</span></div>
+      <div class="actions" aria-label="互动动作">
+        <button class="action-card" data-action="head"><span class="action-icon blue"><svg viewBox="0 0 32 32" aria-hidden="true"><path d="M12 17V8a3 3 0 0 1 6 0v8l2-2a2 2 0 0 1 3 0l3 4c2 3-1 10-5 10h-6c-4 0-6-4-8-8a2 2 0 0 1 3-3l2 2M9 4 7 2M21 4l2-2M5 9H2"/></svg></span><span class="action-copy"><strong>锤下脑袋</strong><small>别打别打！</small></span><kbd>1</kbd></button>
+        <button class="action-card" data-action="body"><span class="action-icon peach"><svg viewBox="0 0 32 32" aria-hidden="true"><circle cx="16" cy="17" r="10"/><path d="M11 15q2-3 4 0m3 0q2-3 4 0m-11 5q5 7 10 0M6 5 4 3m22 2 2-2"/></svg></span><span class="action-copy"><strong>挠挠痒痒</strong><small>俺不中嘞</small></span><kbd>2</kbd></button>
+        <button class="action-card" data-action="cat"><span class="action-icon pink"><svg viewBox="0 0 32 32" aria-hidden="true"><path d="m7 15-1-10 9 5h3l8-5-1 10c6 15-25 15-18 0Z"/><path d="m11 18 2 1m7 0 2-1m-8 5q2 2 4 0M4 20H1m3 4H2m26-4h3m-3 4h2"/></svg></span><span class="action-copy"><strong>摸摸猫咪</strong><small>呼噜呼噜</small></span><kbd>3</kbd></button>
+      </div>
+      <p class="footer-note">陪伴，就是一起虚度一小会儿。<span aria-hidden="true"> ♡</span></p>
+    </footer>
+  </main>
+  <noscript>这个 3D 小游戏需要开启 JavaScript。</noscript>
+  <script type="module">import('./main.js').catch(error=>{console.error(error);document.querySelector('#loading').hidden=true;document.querySelector('#error').hidden=false;document.querySelector('#error-message').textContent='场景资源未能加载。请刷新页面，或检查浏览器的硬件加速设置。';});</script>
+</body>
+</html>

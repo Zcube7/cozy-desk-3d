@@ -1,0 +1,20 @@
+import {chromium} from './.sites-runtime/node_modules/playwright/index.mjs';
+import fs from 'node:fs/promises';
+await fs.mkdir('qa-output',{recursive:true});
+const browser=await chromium.launch({executablePath:'C:/Program Files/Google/Chrome/Application/chrome.exe',headless:true,args:['--enable-webgl']});
+const page=await browser.newPage({viewport:{width:1440,height:1000},deviceScaleFactor:1});
+const errors=[];page.on('pageerror',e=>errors.push(e.message));page.on('requestfailed',r=>errors.push(r.url()+': '+r.failure()?.errorText));
+await page.goto('http://127.0.0.1:4177/',{waitUntil:'networkidle'});
+await page.waitForSelector('#loading[hidden]',{timeout:20000,state:'attached'});
+await page.screenshot({path:'qa-output/desktop.png'});
+for(const [target,name] of [['head','head'],['body','tickle'],['cat','belly']]){await page.locator('.action-card[data-action="'+target+'"]').click();if(!await page.locator(target==='cat'?'#cat-speech':'#speech').evaluate(el=>el.classList.contains('show')))throw new Error('Missing reaction: '+target);await page.waitForTimeout(target==='cat'?1100:550);await page.screenshot({path:'qa-output/'+name+'.png'});}
+await page.waitForTimeout(5700);
+if(await page.locator('.speech.show').count())throw new Error('Animations did not return to idle');
+await page.locator('#sound').click();if(await page.locator('#sound').getAttribute('aria-pressed')!=='true')throw new Error('Sound toggle failed');
+await page.keyboard.press('1');await page.waitForTimeout(200);if(!await page.locator('#speech').evaluate(el=>el.classList.contains('show')))throw new Error('Keyboard failed');
+await page.locator('#reset').click();
+await page.setViewportSize({width:390,height:844});await page.waitForTimeout(600);await page.screenshot({path:'qa-output/mobile.png'});
+const overflow=await page.evaluate(()=>document.documentElement.scrollWidth>innerWidth);if(overflow)throw new Error('Horizontal overflow');
+await page.locator('.action-card[data-action="cat"]').click();await page.waitForTimeout(900);await page.screenshot({path:'qa-output/mobile-cat.png'});
+console.log(JSON.stringify({errors,verified:['3D canvas loaded','three action buttons','animation recovery','keyboard shortcut','sound toggle','390 px mobile layout'],webmcp:await page.evaluate(()=>!!document.modelContext)}));
+await browser.close();if(errors.length)process.exitCode=1;
