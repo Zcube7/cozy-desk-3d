@@ -2,6 +2,29 @@
 
 基于用户提供的黑发、蓝衣人物与白猫参考图制作的 3D 网页互动原型。角色、家具、猫咪均为 Three.js 立体几何模型，可转动视角；不是把参考图贴在平面上。
 
+- 在线试玩：**https://zcube7.github.io/cozy-desk-3d/**
+- 源码仓库：https://github.com/Zcube7/cozy-desk-3d
+- 自动发布记录：https://github.com/Zcube7/cozy-desk-3d/actions/workflows/deploy-pages.yml
+
+## 持续更新
+
+GitHub 的 `main` 分支是正式版本。每次推送到 `main`，GitHub Actions 都会检查游戏 JavaScript，然后把 `dist/` 发布到同一个 GitHub Pages 地址。也可以在 Actions 页面手动运行 `Deploy GitHub Pages`。
+
+修改页面用 `dist/index.html`，调整样式用 `dist/style.css`，修改角色造型和互动动画用 `dist/main.js`。可以直接在 GitHub 编辑，也可以在本地修改、试玩后提交：
+
+```powershell
+git pull --ff-only
+npm start
+# 试玩结束后按 Ctrl+C 停止本地服务，再提交改动。
+git add dist
+git commit -m "Improve game interaction"
+git push origin main
+```
+
+发布是否完成以 Actions 的绿色成功状态为准；如果检查失败，修复后重新推送。需要恢复旧版本时，在 Git 中撤销对应提交再推送，网站会跟随更新。
+
+GitHub 仓库和 Pages 网页均为公开。网站运行和自动发布都不需要额外配置 API Key 或部署密钥。
+
 ## 玩法
 
 - 锤下脑袋：双手抬起护住脑袋，委屈地回应「别打别打！」。
@@ -28,7 +51,8 @@ npm start
 - `dist/main.js`：场景、模型、灯光、射线点击、动画状态与合成音效。
 - `dist/vendor/`：固定版本 Three.js 0.180.0、附加模块与 MIT 许可证。
 - `serve.mjs`：仅监听本机地址的本地静态服务器。
-- `.openai/hosting.json`：站点身份与静态发布目录。
+- `.github/workflows/deploy-pages.yml`：从 `main` 自动发布到 GitHub Pages。
+- `.openai/hosting.json`：保留的原 Sites 站点配置，不参与 GitHub Pages 发布。后续持续更新以 GitHub Pages 地址为准。
 
 Three.js 官方文档：https://threejs.org/docs/ 。浏览器需支持 WebGL 2；显示错误时页面会提供重试入口。
 
