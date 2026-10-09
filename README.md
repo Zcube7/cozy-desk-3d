@@ -2,6 +2,8 @@
 
 基于用户提供的黑发、蓝衣人物与白猫参考图制作的 3D 网页互动原型。角色、家具、猫咪均为 Three.js 立体几何模型，可转动视角；不是把参考图贴在平面上。
 
+人物模型使用连续的圆润脸型、侧分刘海、独立眨眼与带手指轮廓的手掌，并保留蓝衣、粉色短裤。白猫具有圆润口鼻、粉色耳朵、柔和的毛簇轮廓和四只肉垫；翻肚皮时头部会转向玩家，爪子避开脸部。
+
 - 在线试玩：**https://zcube7.github.io/cozy-desk-3d/**
 - 源码仓库：https://github.com/Zcube7/cozy-desk-3d
 - 自动发布记录：https://github.com/Zcube7/cozy-desk-3d/actions/workflows/deploy-pages.yml
