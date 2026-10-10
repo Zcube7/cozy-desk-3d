@@ -3,5 +3,5 @@
   "version": "1.0.0",
   "private": true,
   "type": "module",
-  "scripts": { "start": "node serve.mjs", "check": "node --check dist/main.js" }
+  "scripts": { "start": "node serve.mjs", "check": "node check.mjs" }
 }

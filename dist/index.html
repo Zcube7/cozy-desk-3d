@@ -8,7 +8,18 @@
   <title>小小陪伴 · 午后桌边</title>
   <link rel="icon" type="image/svg+xml" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 64 64'%3E%3Crect width='64' height='64' rx='20' fill='%234e78bb'/%3E%3Cpath d='M15 30 16 15 29 23 37 23 49 15 50 32Q54 51 32 51 11 51 15 30' fill='white'/%3E%3Cpath d='m23 34 4 2m10 0 4-2m-12 8q3 3 6 0' fill='none' stroke='%234e78bb' stroke-width='3' stroke-linecap='round'/%3E%3C/svg%3E">
   <link rel="stylesheet" href="./style.css">
-  <script type="importmap">{"imports":{"three":"./vendor/three.module.js"}}</script>
+  <script type="importmap">{"imports":{"three":"./vendor/three.module.min.js"}}</script>
+  <link rel="modulepreload" href="./vendor/three.core.min.js">
+  <link rel="modulepreload" href="./vendor/three.module.min.js">
+  <link rel="modulepreload" href="./js/main.js">
+  <link rel="modulepreload" href="./js/kit.js">
+  <link rel="modulepreload" href="./js/room.js">
+  <link rel="modulepreload" href="./js/person.js">
+  <link rel="modulepreload" href="./js/cat.js">
+  <link rel="modulepreload" href="./js/framing.js">
+  <link rel="modulepreload" href="./js/ui.js">
+  <link rel="modulepreload" href="./vendor/OrbitControls.js">
+  <link rel="modulepreload" href="./vendor/RoundedBoxGeometry.js">
 </head>
 <body>
   <main id="app">
@@ -30,7 +41,7 @@
       <button id="cat-hint" class="scene-hint" data-action="cat" aria-label="摸摸白猫">摸摸我呀<span></span></button>
       <div id="sleep" class="sleep" aria-hidden="true">z<span>z</span><small>z</small></div>
       <div id="particles" aria-hidden="true"></div>
-      <div class="view-note"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M8 3h8M12 3v4M8 21h8M12 17v4M3 8v8M3 12h4M21 8v8M17 12h4"/></svg>拖动看看 · 滚轮缩放</div>
+      <div class="view-note"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M8 3h8M12 3v4M8 21h8M12 17v4M3 8v8M3 12h4M21 8v8M17 12h4"/></svg><span class="for-mouse">拖动看看 · 滚轮缩放</span><span class="for-touch">单指转动 · 双指缩放</span></div>
     </section>
     <footer class="bottom-area">
       <div class="interaction-label"><span>一点点互动，一点点开心</span><span class="keyboard-note">也可以直接点场景里的他们</span></div>
@@ -43,6 +54,6 @@
     </footer>
   </main>
   <noscript>这个 3D 小游戏需要开启 JavaScript。</noscript>
-  <script type="module">import('./main.js').catch(error=>{console.error(error);document.querySelector('#loading').hidden=true;document.querySelector('#error').hidden=false;document.querySelector('#error-message').textContent='场景资源未能加载。请刷新页面，或检查浏览器的硬件加速设置。';});</script>
+  <script type="module">import('./js/main.js').catch(error=>{console.error(error);document.querySelector('#loading').hidden=true;document.querySelector('#error').hidden=false;document.querySelector('#error-message').textContent='场景资源未能加载。请刷新页面，或检查浏览器的硬件加速设置。';});</script>
 </body>
 </html>
