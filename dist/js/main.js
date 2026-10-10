@@ -57,7 +57,8 @@ function wake(ms = 600) {
 // ---- Interaction state -------------------------------------------------------
 
 const DURATION = { head: 3.15, body: 3.6, cat: 5.2 };
-const state = { person: 'idle', personStart: -100, cat: 'sleep', catStart: -100 };
+const RISE = 0.38, FALL = 0.55; // seconds to ease into and out of a reaction
+const state = { person: 'idle', personStart: -100, personTotal: 0, cat: 'sleep', catStart: -100, catTotal: 0 };
 let elapsed = 0;
 
 const ui = createUI({ stage, camera, reducedMotion, onAction: activate });
@@ -66,11 +67,11 @@ const headPos = new THREE.Vector3(), catPos = new THREE.Vector3();
 function activate(type) {
   if (!['head', 'body', 'cat'].includes(type)) throw new TypeError('Unknown interaction');
   if (type === 'cat') {
-    state.cat = 'belly';
-    state.catStart = elapsed;
+    pet();
   } else {
     state.person = type;
     state.personStart = elapsed;
+    state.personTotal = DURATION[type];
   }
   ui.sync(state);
   ui.burst(type, (type === 'cat' ? cat.root : person.head).getWorldPosition(new THREE.Vector3()));
@@ -83,12 +84,29 @@ const ease = t => {
   t = THREE.MathUtils.clamp(t, 0, 1);
   return t * t * (3 - 2 * t);
 };
-const envelope = (t, total) => ease(t / 0.38) * (1 - ease((t - total + 0.55) / 0.55));
+const envelope = (t, total) => ease(t / RISE) * (1 - ease((t - total + FALL) / FALL));
+
+/**
+ * Petting a cat that already lies on its back keeps it there longer; otherwise it rolls
+ * over from wherever it is (even halfway back to sleep), so repeated petting never jumps.
+ */
+function pet() {
+  const t = elapsed - state.catStart, lying = state.cat === 'belly';
+  if (lying && t >= RISE && t <= state.catTotal - FALL) {
+    state.catTotal = t + DURATION.cat - RISE;
+    return;
+  }
+  const amount = lying ? envelope(t, state.catTotal) : 0;
+  // Inverse of the smoothstep in ease(): how far into the rise that amount sits.
+  state.catStart = elapsed - RISE * (0.5 - Math.sin(Math.asin(1 - 2 * amount) / 3));
+  state.catTotal = DURATION.cat;
+  state.cat = 'belly';
+}
 
 /** How far into its reaction a character is (0..1), returning to rest when time is up. */
 function amountFor(who, rest) {
   if (state[who] === rest) return 0;
-  const t = elapsed - state[who + 'Start'], total = DURATION[state[who] === 'belly' ? 'cat' : state[who]];
+  const t = elapsed - state[who + 'Start'], total = state[who + 'Total'];
   if (t < total) return envelope(t, total);
   state[who] = rest;
   ui.sync(state);

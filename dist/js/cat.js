@@ -36,14 +36,30 @@ noseShape.quadraticCurveTo(0.041, 0.026, 0.033, 0.005);
 noseShape.quadraticCurveTo(0.014, -0.025, 0, -0.027);
 noseShape.quadraticCurveTo(-0.013, -0.025, -0.034, 0.005);
 
+// The body rolls about its long (x) axis onto its back. The head and paws are posed
+// in the cat's own unrolled frame and converted into the rolled body's frame, so
+// they travel with the body yet always end up where they read well from the front.
+const BELLY_ROLL = -Math.PI * 0.77;
+const HEAD_SLEEP = [-0.48, 0.105, 0.145], HEAD_BELLY = [-0.47, 0, 0.13], HEAD_YAW = 0.24;
+const PAW_SLEEP = [[-0.28, -0.14, 0.24], [-0.28, -0.14, -0.19], [0.43, -0.14, 0.24], [0.43, -0.14, -0.19]];
+// On its back the paws rise beside the chin and over the belly, clear of the face.
+const PAW_BELLY = [[0.12, 0.46, 0], [0.06, 0.42, 0.22], [0.5, 0.38, 0.02], [0.42, 0.3, 0.26]];
+
+/** A point given in the cat's frame, expressed in the frame of a body rolled by `angle`. */
+const unroll = ([x, y, z], angle) => [x, y * Math.cos(angle) + z * Math.sin(angle), z * Math.cos(angle) - y * Math.sin(angle)];
+const PAW_BELLY_ROLLED = PAW_BELLY.map(p => unroll(p, BELLY_ROLL));
+const mix = (a, b, t) => a.map((v, i) => v + (b[i] - v) * t);
+const pulse = (t, at, width) => Math.exp(-(((t - at) / width) ** 2));
+
 function buildHead(roll) {
-  const head = group(roll, [-0.48, 0.105, 0.145]);
-  head.rotation.y = 0.24;
+  const head = group(roll, HEAD_SLEEP);
+  head.rotation.y = HEAD_YAW;
   const skull = softForm(head, coat, [0, 0, 0], [0.4, 0.335, 0.32], { cheeks: 0.07, fluff: 0.008, color: headShade });
   const on = surfaceProbe(skull.geometry);
   const at = (x, y, offset) => on(x, y, offset).point;
   const facing = (o, normal) => o.quaternion.setFromUnitVectors(new THREE.Vector3(0, 0, 1), normal);
 
+  const ears = [], eyes = [];
   for (const side of [-1, 1]) {
     const ear = group(head, [side * 0.242, 0.257, -0.024]);
     ear.rotation.z = -side * 0.23;
@@ -53,7 +69,7 @@ function buildHead(roll) {
       strand(ear, fur, [[side * 0.02 * i, -0.06, 0.11], [side * (0.025 + 0.015 * i), 0.0, 0.125], [side * (0.035 + 0.015 * i), 0.06, 0.12]],
         { width: 0.013, depth: 0.009, profile: 'tip' });
     }
-    bake(ear);
+    ears.push({ ear: bake(ear), side });
     // Fluffy cheeks: soft puffs along the jaw and a few short tufts flaring out.
     for (const [x, y, z, s] of [[0.33, -0.1, 0.1, 1], [0.3, -0.19, 0.12, 0.95], [0.21, -0.25, 0.15, 0.9]]) {
       softForm(head, fur, [side * x, y, z], [0.1 * s, 0.085 * s, 0.075 * s], { fluff: 0.03, detail: 0.6 });
@@ -91,6 +107,7 @@ function buildHead(roll) {
     const { point, normal } = on(x, y, 0.002);
     const eye = group(faces.love, point);
     facing(eye, normal);
+    eyes.push(eye);
     ball(eye, mat('#2b2627', 0.5), [0, 0, 0], [0.104, 0.106, 0.018]);
     ball(eye, mat('#fdfcf8', 0.4), [0, 0, 0.004], [0.094, 0.096, 0.02]);
     ball(eye, mat('#24282c', 0.16), [0, 0, 0.008], [0.083, 0.085, 0.022]);
@@ -102,7 +119,7 @@ function buildHead(roll) {
   }
   faces.love.visible = false;
   for (const g of Object.values(faces)) bake(shadowless(g));
-  return { head, faces };
+  return { head, faces, ears, eyes };
 }
 
 function buildTail(roll) {
@@ -139,10 +156,10 @@ export function createCat(world, { reducedMotion }) {
   softForm(roll, coat, [-0.23, 0.045, 0.015], [0.385, 0.33, 0.355], { fluff: 0.02, color: bodyShade });
   softForm(roll, mat('#f7efeb', 1), [0.13, -0.294, 0.025], [0.387, 0.043, 0.232], { fluff: 0.025 });
 
-  const { head, faces } = buildHead(roll);
+  const { head, faces, ears, eyes } = buildHead(roll);
   const paws = [];
   for (let i = 0; i < 4; i++) {
-    const paw = group(roll, [i < 2 ? -0.28 : 0.43, -0.14, i % 2 ? -0.19 : 0.24]);
+    const paw = group(roll, PAW_SLEEP[i]);
     softForm(paw, fur, [0, -0.031, 0], [0.133, 0.119, 0.13], { fluff: 0.016, detail: 0.6 });
     const pad = mat('#e8a2b0', 0.9);
     ball(paw, pad, [0, -0.145, 0], [0.061, 0.012, 0.055]);
@@ -158,19 +175,39 @@ export function createCat(world, { reducedMotion }) {
 
   function update(time, t, amount) {
     const idle = reducedMotion ? 0 : 1;
-    roll.rotation.x = -Math.PI * 0.77 * amount;
+    const landed = Math.max(0, t - 0.38);
+    const settle = idle * amount * Math.exp(-4 * landed) * Math.sin(10 * landed); // bounce as the roll lands
+    const hold = idle * amount * smoothstep(t, 0.45, 0.9); // on its back, purring
+    const rolled = BELLY_ROLL * amount - 0.1 * settle + 0.07 * Math.sin(t * 2.8) * hold;
+    roll.rotation.x = rolled;
     cat.position.y = 0.47 + Math.sin(Math.PI * amount) * 0.095 + 0.06 * amount;
     roll.position.y = idle * Math.sin(time * 2.1) * 0.008 * (1 - amount);
-    // Turn the head toward the visitor as the body rolls; keep the muzzle off the rug.
-    head.rotation.x = Math.PI * 0.67 * amount;
-    head.rotation.z = idle * Math.sin(t * 4) * 0.055 * amount;
-    head.position.y = 0.105 - 0.065 * amount;
-    head.position.z = 0.145 - 0.235 * amount;
+
+    // The roll first carries the head back with it; then the cat lifts its chin toward
+    // the visitor, lets its head flop sideways and rubs it to and fro. Rolling back to
+    // sleep carries the head along again.
+    const carry = rolled * (0.5 * Math.exp(-4 * t) + (t > 1 ? 0.35 * (1 - amount) : 0));
+    const nod = idle * 0.025 * Math.sin(time * 2.1) * (1 - amount);
+    head.position.set(...unroll(mix(HEAD_SLEEP, HEAD_BELLY, amount), rolled));
+    head.rotation.set(
+      -0.45 * amount + carry + nod - rolled,
+      HEAD_YAW + 0.14 * Math.sin(t * 2.3 + 0.7) * hold,
+      0.55 * amount + 0.35 * settle + 0.15 * Math.sin(t * 3.4) * hold,
+    );
+    // Ear flicks and a slow blink (how cats say they like you), repeating while petted.
+    const cycle = t % 3.4;
+    for (const { ear, side } of ears) {
+      const flick = idle * amount * (pulse(cycle, side > 0 ? 0.85 : 0.75, 0.06) + pulse(cycle, side > 0 ? 2.8 : 2.95, 0.06));
+      ear.rotation.set(-0.2 * hold, 0, side * (0.4 * flick - 0.23));
+    }
     faces.sleep.visible = amount < 0.38;
     faces.love.visible = amount >= 0.38;
+    const blink = hold * smoothstep(cycle, 2.3, 2.42) * (1 - smoothstep(cycle, 2.6, 2.82));
+    for (const eye of eyes) eye.scale.y = 1 - 0.9 * blink;
+
     paws.forEach((paw, i) => {
       const front = i < 2, near = i % 2 === 0;
-      paw.position.set((front ? -0.28 : 0.43) + (front ? 0.32 : 0) * amount, -0.14 - 0.145 * amount, (near ? 0.24 : -0.19) + (near ? 0.04 : -0.025) * amount);
+      paw.position.set(...mix(PAW_SLEEP[i], PAW_BELLY_ROLLED[i], amount));
       paw.rotation.z = (front ? -1 : 1) * 0.24 * amount + idle * Math.sin(t * 5.5 + i) * 0.17 * amount;
       paw.rotation.x = (near ? 0.12 : -0.12) * amount;
     });
